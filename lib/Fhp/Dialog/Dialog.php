@@ -174,7 +174,9 @@ class Dialog
 				throw $ex;
 			}
 
-			if (!$response->isStrongAuthRequired()) {
+			$hitan = $response->splitSegment($response->findSegment('HITAN'));
+
+			if (!isset($hitan[4]) or $hitan[4] == 'nochallenge') {
 				return $response;
 			}
 
@@ -280,7 +282,7 @@ class Dialog
 				$level = LogLevel::INFO;
 		}
 
-		$this->logger->log($level, '[' . $type . '] ' . $code . ': ' . $message);
+		$this->logger->log($level, '[' . $type . '] ' . $message);
 	}
 
 	/**
@@ -361,7 +363,7 @@ class Dialog
 	 * @throws FailedRequestException
 	 * @throws \Exception
 	 */
-	public function initDialog($tanMediaName)
+	public function initDialog()
 	{
 		$this->logger->info('');
 		$this->logger->info('DIALOG initialize');
@@ -387,9 +389,9 @@ class Dialog
 			array(
 				$identification,
 				$prepare,
-				new HKTAN(HKTAN::VERSION, 5, null, $tanMediaName)
+				new HKTAN(HKTAN::VERSION, 5)
 			),
-			array(AbstractMessage::OPT_PINTAN_MECH => array_keys($this->supportedTanMechanisms))
+			array(AbstractMessage::OPT_PINTAN_MECH => $this->supportedTanMechanisms)
 		);
 
 		#$this->logger->debug('Sending INIT message:');
@@ -417,7 +419,7 @@ class Dialog
 	 * @throws FailedRequestException
 	 * @throws \Exception
 	 */
-	public function syncDialog($tanMechanism = null, $tanMediaName = null)
+	public function syncDialog($sendHKTan = true, $tanMechanism = null)
 	{
 		$this->logger->info('');
 		$this->logger->info('SYNC initialize');
@@ -435,30 +437,42 @@ class Dialog
 			$this->productVersion
 		);
 
-		$options = array();
-		$encryptedSegments = array(
-			$identification,
-			$prepare
-		);
+		if ($sendHKTan) {
+			$options = array();
+			if ($tanMechanism) {
+				$options[AbstractMessage::OPT_PINTAN_MECH] = array($tanMechanism);
+			}
 
-		if (null !== $tanMechanism) {
-			$options[AbstractMessage::OPT_PINTAN_MECH] = array($tanMechanism);
-			$encryptedSegments[] = new HKTAN(HKTAN::VERSION, 5, null, $tanMediaName);
-			$encryptedSegments[] = new HKSYN(6);
+			$syncMsg = new Message(
+				$this->bankCode,
+				$this->username,
+				$this->pin,
+				$this->systemId,
+				$this->dialogId,
+				$this->messageNumber,
+				array(
+					$identification,
+					$prepare,
+					new HKTAN(HKTAN::VERSION, 5),
+					new HKSYN(6)
+				),
+				$options
+			);
 		} else {
-			$encryptedSegments[] = new HKSYN(5);
+			$syncMsg = new Message(
+				$this->bankCode,
+				$this->username,
+				$this->pin,
+				$this->systemId,
+				$this->dialogId,
+				$this->messageNumber,
+				array(
+					$identification,
+					$prepare,
+					new HKSYN(5)
+				)
+			);
 		}
-
-		$syncMsg = new Message(
-			$this->bankCode,
-			$this->username,
-			$this->pin,
-			$this->systemId,
-			$this->dialogId,
-			$this->messageNumber,
-			$encryptedSegments,
-			$options
-		);
 
 		#$this->logger->debug('Sending SYNC message:');
 		#$this->logger->debug((string) $syncMsg);
@@ -483,11 +497,7 @@ class Dialog
 
 		$this->logger->info('Received system id: ' . $response->getSystemId());
 		$this->logger->info('Received dialog id: ' . $response->getDialogId());
-		$mechs = array();
-		foreach ($this->supportedTanMechanisms as $mechId => $mechName) {
-			$mechs[] = sprintf('%s (%d)', $mechName, $mechId);
-		}
-		$this->logger->info('Supported TAN mechanisms: ' . implode(', ', $mechs));
+		$this->logger->info('Supported TAN mechanisms: ' . implode(', ', $this->supportedTanMechanisms));
 		$this->logger->info('SYNC end');
 
 		return $response;
@@ -524,8 +534,8 @@ class Dialog
 			)
 		);
 
-		#$this->logger->debug("S ".(string) $endMsg);
-		$response = null;
+        #$this->logger->debug("S ".(string) $endMsg);
+        $response = null;
 		try {
 			$response = $this->sendMessage($endMsg);
 		} catch (FailedRequestException $ex) {
