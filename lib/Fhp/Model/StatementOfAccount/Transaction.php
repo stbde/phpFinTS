@@ -78,6 +78,26 @@ class Transaction
 	protected $booked;
 
     /**
+     * @var string
+     */
+	protected $primanoten_nr;
+
+	/**
+     * @var string
+     */
+	protected $text_key_addition;
+
+	/**
+     * @var string
+     */
+	protected $customerref;
+
+	/**
+     * @var string
+     */
+	protected $instref;
+
+    /**
      * Get booking date.
      *
      * @deprecated Use getBookingDate() instead
@@ -430,4 +450,100 @@ class Transaction
 
         return $this;
     }
+
+	/**
+     * Get primanoten_nr
+     *
+     * @return string
+     */
+	public function getPrimanotenNr()
+	{
+		return $this->primanoten_nr;
+	}
+
+	/**
+     * Set primanoten_nr
+     *
+     * @param string $primanoten_nr
+     *
+     * @return $this
+     */
+	public function setPrimanotenNr($primanoten_nr)
+	{
+		$this->primanoten_nr = (string) $primanoten_nr;
+
+        return $this;
+	}
+
+	/**
+     * Get text_key_addition
+     *
+     * @return string
+     */
+	public function getTextKeyAddition()
+	{
+		return $this->text_key_addition;
+	}
+
+	/**
+     * Set text_key_addition
+     *
+     * @param string $text_key_addition
+     *
+     * @return $this
+     */
+	public function setTextKeyAddition($text_key_addition)
+	{
+		$this->text_key_addition = (string) $text_key_addition;
+
+        return $this;
+	}
+
+	/**
+     * Get customerref
+     *
+     * @return string
+     */
+	public function getCustomerref()
+	{
+		return $this->customerref;
+	}
+
+	/**
+     * Set customerref
+     *
+     * @param string $customerref
+     *
+     * @return $this
+     */
+	public function setCustomerref($customerref)
+	{
+		$this->customerref = (string) $customerref;
+
+        return $this;
+	}
+
+	/**
+     * Get instref
+     *
+     * @return string
+     */
+	public function getInstref()
+	{
+		return $this->instref;
+	}
+
+	/**
+     * Set instref
+     *
+     * @param string $instref
+     *
+     * @return $this
+     */
+	public function setInstref($instref)
+	{
+		$this->instref = (string) $instref;
+
+        return $this;
+	}
 }
