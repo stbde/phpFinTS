@@ -147,10 +147,10 @@ class MT940
                     $trx[count($trx) - 1]['valuta_date'] = $valutaDate;
                     $trx[count($trx) - 1]['booked'] = $booked;
 
-					$parsedTag61 = $this->parseTag61($transaction);
+                    $parsedTag61 = $this->parseTag61($transaction);
 
-					$trx[count($trx) - 1]['customerref'] = $parsedTag61['customerref'];
-					$trx[count($trx) - 1]['instref'] = (isset($parsedTag61['instref']) ? $parsedTag61['instref'] : '');
+                    $trx[count($trx) - 1]['customerref'] = $parsedTag61['customerref'];
+                    $trx[count($trx) - 1]['instref'] = (isset($parsedTag61['instref']) ? $parsedTag61['instref'] : '');
                 }
             }
         }
@@ -187,7 +187,7 @@ class MT940
                 } else {
                     $description2 .= $m[2];
                 }
-				if ($m[2] != '') {
+                if ($m[2] != '') {
                     $descriptionLines[] = $m[2];
                 }
             }
@@ -259,149 +259,149 @@ class MT940
         return $m[1] . '-' . $m[2] . '-' . $m[3];
     }
 
-	/**
-	 * Adaptiert von HBCI4Java
-	 *
-	 * @param string $st_ums
-	 * @return array
-	 */
-	protected function parseTag61(string $st_ums) {
+    /**
+     * Adaptiert von HBCI4Java
+     *
+     * @param string $st_ums
+     * @return array
+     */
+    protected function parseTag61(string $st_ums) {
 
-		// 1905150515DR44,87NDDTNONREF
-		// 1906070607CR8000,00N060NONREF//063000110706
+        // 1905150515DR44,87NDDTNONREF
+        // 1906070607CR8000,00N060NONREF//063000110706
 
-		$result = [];
+        $result = [];
 
-		// extract bdate
-		$next = 0;
-		if ($st_ums[6] > '9') {
-			//line.bdate = line.valuta;
-			$next = 6;
-		} else {
-			//line.bdate=dateFormat.parse(st_ums.substring(0,2) . st_ums.substring(6,10));
+        // extract bdate
+        $next = 0;
+        if ($st_ums[6] > '9') {
+            //line.bdate = line.valuta;
+            $next = 6;
+        } else {
+            //line.bdate=dateFormat.parse(st_ums.substring(0,2) . st_ums.substring(6,10));
 
-			// wenn bdate und valuta um mehr als einen monat voneinander
-			// abweichen, dann ist das jahr des bdate falsch (1.1.2005 vs. 31.12.2004)
-			// korrektur des bdate-jahres in die richtige richtung notwendig
-			/*if (Math.abs(line.bdate.getTime()-line.valuta.getTime()) > 30L*24*3600*1000) {
-				int diff;
+            // wenn bdate und valuta um mehr als einen monat voneinander
+            // abweichen, dann ist das jahr des bdate falsch (1.1.2005 vs. 31.12.2004)
+            // korrektur des bdate-jahres in die richtige richtung notwendig
+            /*if (Math.abs(line.bdate.getTime()-line.valuta.getTime()) > 30L*24*3600*1000) {
+                int diff;
 
-				if (line.bdate.before(line.valuta)) {
-					diff=+1;
-				} else {
-					diff=-1;
-				}
-				Calendar cal=Calendar.getInstance();
-				cal.setTime(line.bdate);
-				cal.set(Calendar.YEAR,cal.get(Calendar.YEAR)+diff);
-				line.bdate=cal.getTime();
-			}*/
+                if (line.bdate.before(line.valuta)) {
+                    diff=+1;
+                } else {
+                    diff=-1;
+                }
+                Calendar cal=Calendar.getInstance();
+                cal.setTime(line.bdate);
+                cal.set(Calendar.YEAR,cal.get(Calendar.YEAR)+diff);
+                line.bdate=cal.getTime();
+            }*/
 
-			$next = 10;
-		}
+            $next = 10;
+        }
 
-		// extract credit/debit
-		//$cd;
-		if ($st_ums[$next] == 'C' || $st_ums[$next] == 'D') {
-			//line.isStorno=false;
-			//cd=st_ums.substring(next,next+1);
-			$next++;
-		} else {
-			//line.isStorno=true;
-			//cd=st_ums.substring(next+1,next+2);
-			$next += 2;
-		}
+        // extract credit/debit
+        //$cd;
+        if ($st_ums[$next] == 'C' || $st_ums[$next] == 'D') {
+            //line.isStorno=false;
+            //cd=st_ums.substring(next,next+1);
+            $next++;
+        } else {
+            //line.isStorno=true;
+            //cd=st_ums.substring(next+1,next+2);
+            $next += 2;
+        }
 
-		// skip part of currency
-		$currpart = $st_ums[$next];
-		if ($currpart > '9')
-			$next++;
+        // skip part of currency
+        $currpart = $st_ums[$next];
+        if ($currpart > '9')
+            $next++;
 
-		//line.value = new Value();
+        //line.value = new Value();
 
-		// TODO: bei einem MT942 wird die waehrung hier automatisch auf EUR
-		// gesetzt, weil die auto-erkennung (anhand des anfangssaldos) hier nicht
-		// funktioniert, weil es im MT942 keinen anfangssaldo gibt
-		//line.value.setCurr((btag.start!=null)?btag.start.value.getCurr():"EUR");
+        // TODO: bei einem MT942 wird die waehrung hier automatisch auf EUR
+        // gesetzt, weil die auto-erkennung (anhand des anfangssaldos) hier nicht
+        // funktioniert, weil es im MT942 keinen anfangssaldo gibt
+        //line.value.setCurr((btag.start!=null)?btag.start.value.getCurr():"EUR");
 
-		// extract value and skip code
-		$npos = stripos($st_ums, 'N', $next);
-		// welcher Code (C/D) zeigt einen negativen Buchungsbetrag
-		// an? Bei einer "normalen" Buchung ist das D(ebit). Bei
-		// einer Storno-Buchung ist der Betrag allerdings negativ,
-		// wenn eine ehemalige Gutschrift (Credit) storniert wird,
-		// in dem Fall wäre als "C" der Indikator für den negativen
-		// Buchungsbetrag
-		/*$negValueIndikator = line.isStorno ? "C" : "D";
-		line.value.setValue(
-			HBCIUtilsInternal.string2Long(
-				(cd.equals(negValueIndikator)?"-":"") + st_ums.substring(next,npos).replace(',','.'),
-				100));*/
-		$next = $npos + 4;
+        // extract value and skip code
+        $npos = stripos($st_ums, 'N', $next);
+        // welcher Code (C/D) zeigt einen negativen Buchungsbetrag
+        // an? Bei einer "normalen" Buchung ist das D(ebit). Bei
+        // einer Storno-Buchung ist der Betrag allerdings negativ,
+        // wenn eine ehemalige Gutschrift (Credit) storniert wird,
+        // in dem Fall wäre als "C" der Indikator für den negativen
+        // Buchungsbetrag
+        /*$negValueIndikator = line.isStorno ? "C" : "D";
+        line.value.setValue(
+            HBCIUtilsInternal.string2Long(
+                (cd.equals(negValueIndikator)?"-":"") + st_ums.substring(next,npos).replace(',','.'),
+                100));*/
+        $next = $npos + 4;
 
-		// update saldo
-		/*saldo+=line.value.getLongValue();
+        // update saldo
+        /*saldo+=line.value.getLongValue();
 
-		line.saldo=new Saldo();
-		line.saldo.timestamp=line.bdate;*/
-		// TODO: bei einem MT942 wird die waehrung hier automatisch auf EUR
-		// gesetzt, weil die auto-erkennung (anhand des anfangssaldos) hier nicht
-		// funktioniert, weil es im MT942 keinen anfangssaldo gibt
-		//line.saldo.value=new Value(saldo, (btag.start!=null)?btag.start.value.getCurr():"EUR");
+        line.saldo=new Saldo();
+        line.saldo.timestamp=line.bdate;*/
+        // TODO: bei einem MT942 wird die waehrung hier automatisch auf EUR
+        // gesetzt, weil die auto-erkennung (anhand des anfangssaldos) hier nicht
+        // funktioniert, weil es im MT942 keinen anfangssaldo gibt
+        //line.saldo.value=new Value(saldo, (btag.start!=null)?btag.start.value.getCurr():"EUR");
 
-		// extract customerref
-		$npos = stripos($st_ums, '//', $next);
-		if ($npos === false)
-			$npos = stripos($st_ums, "\r\n", $next);
-		if ($npos === false)
-			$npos = strlen($st_ums);
-		$result['customerref'] = substr($st_ums, $next, $npos - $next);
-		$next = $npos;
+        // extract customerref
+        $npos = stripos($st_ums, '//', $next);
+        if ($npos === false)
+            $npos = stripos($st_ums, "\r\n", $next);
+        if ($npos === false)
+            $npos = strlen($st_ums);
+        $result['customerref'] = substr($st_ums, $next, $npos - $next);
+        $next = $npos;
 
-		// check for instref
-		if (($next < strlen($st_ums)) && (substr($st_ums, $next, 2) == '//')) {
-			// extract instref
-			$next += 2;
-			$npos = stripos($st_ums, "\r\n", $next);
-			if ($npos === false)
-				$npos = strlen($st_ums);
-			$result['instref'] = substr($st_ums, $next, $npos - $next);
-			$next = $npos + 2;
-		}
-		if (!isset($result['instref']) || ($result['instref'] == null))
-			$result['instref'] = '';
+        // check for instref
+        if (($next < strlen($st_ums)) && (substr($st_ums, $next, 2) == '//')) {
+            // extract instref
+            $next += 2;
+            $npos = stripos($st_ums, "\r\n", $next);
+            if ($npos === false)
+                $npos = strlen($st_ums);
+            $result['instref'] = substr($st_ums, $next, $npos - $next);
+            $next = $npos + 2;
+        }
+        if (!isset($result['instref']) || ($result['instref'] == null))
+            $result['instref'] = '';
 
-		// check for additional information
-		if ($next < strlen($st_ums) && $st_ums[$next] == "\r") {
-			$next += 2;
+        // check for additional information
+        if ($next < strlen($st_ums) && $st_ums[$next] == "\r") {
+            $next += 2;
 
-			// extract orig Value
-			$pos = stripos($st_ums, '/OCMT/', $next);
-			if ($pos !== false) {
-				$slashpos = stripos($st_ums, '/', $pos + 9);
-				if ($slashpos === false)
-					$slashpos = strlen($st_ums);
+            // extract orig Value
+            $pos = stripos($st_ums, '/OCMT/', $next);
+            if ($pos !== false) {
+                $slashpos = stripos($st_ums, '/', $pos + 9);
+                if ($slashpos === false)
+                    $slashpos = strlen($st_ums);
 
-				/*line.orig_value = new Value(
-					st_ums.substring($pos + 9, $slashpos).replace(',','.'),
-					st_ums.substring($pos + 6, $pos + 9));
-				$result['orig_value'] = ;*/
-			}
+                /*line.orig_value = new Value(
+                    st_ums.substring($pos + 9, $slashpos).replace(',','.'),
+                    st_ums.substring($pos + 6, $pos + 9));
+                $result['orig_value'] = ;*/
+            }
 
-			// extract charge Value
-			$pos = stripos($st_ums, '/CHGS/', $next);
-			if ($pos !== false) {
-				$slashpos = stripos($st_ums, '/', $pos + 9);
-				if ($slashpos === false)
-					$slashpos = strlen($st_ums);
+            // extract charge Value
+            $pos = stripos($st_ums, '/CHGS/', $next);
+            if ($pos !== false) {
+                $slashpos = stripos($st_ums, '/', $pos + 9);
+                if ($slashpos === false)
+                    $slashpos = strlen($st_ums);
 
-				/*line.charge_value=new Value(
-					st_ums.substring($pos + 9, $slashpos).replace(',','.'),
-					st_ums.substring($pos + 6, $pos + 9));
-				$result['charge_value'] = ;*/
-			}
-		}
+                /*line.charge_value=new Value(
+                    st_ums.substring($pos + 9, $slashpos).replace(',','.'),
+                    st_ums.substring($pos + 6, $pos + 9));
+                $result['charge_value'] = ;*/
+            }
+        }
 
-		return $result;
-	}
+        return $result;
+    }
 }
