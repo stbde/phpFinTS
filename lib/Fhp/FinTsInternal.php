@@ -356,6 +356,5 @@ class FinTsInternal
 		);
 
 		return $message;
-		//
 	}
 }
